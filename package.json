@@ -1,0 +1,35 @@
+{
+  "name": "d-debt",
+  "private": true,
+  "version": "1.0.0",
+  "description": "d-debt",
+  "repository": "https://github.com/midas-soft/d-debt",
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "clean": "lerna clean -y && rimraf ./node_modules"
+  },
+  "workspaces": {
+    "packages": [
+      "services/*",
+      "libs/*",
+      "infra"
+    ]
+  },
+  "author": "midassoft.dev",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.11.0",
+    "@typescript-eslint/parser": "^5.11.0",
+    "eslint": "^8.8.0",
+    "eslint-config-airbnb-typescript": "^16.1.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jest": "^27.5.1",
+    "lerna": "^4.0.0",
+    "prettier": "^2.5.1",
+    "prisma": "^3.12.0",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^27.1.3"
+  },
+  "license": "MIT"
+}

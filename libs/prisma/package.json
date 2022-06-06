@@ -1,0 +1,16 @@
+{
+  "name": "@d-debt/prisma",
+  "version": "1.0.0",
+  "description": "prisma",
+  "license": "MIT",
+  "scripts": {
+    "db:seed": "ts-node seed/index.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "@prisma/client": "^3.12.0"
+  }
+}

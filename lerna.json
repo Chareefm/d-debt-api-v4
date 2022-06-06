@@ -1,0 +1,6 @@
+{
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "packages": ["services/*", "libs/*", "infra/*"],
+  "version": "1.0.0"
+}

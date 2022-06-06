@@ -1,0 +1,337 @@
+generator client {
+    provider        = "prisma-client-js"
+    binaryTargets   = ["native", "rhel-openssl-1.0.x"]
+    previewFeatures = ["interactiveTransactions", "extendedIndexes", "filterJson"]
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = "postgresql://postgres:admin@localhost:5432/ddebt-api?connection_limit=5&pool_timeout=0"
+}
+
+model OA {
+    id   Int    @id @default(autoincrement())
+    name String @db.VarChar(100)
+
+    OACapability OACapability[]
+
+    Debt  Debt[]
+    Agent Agent[]
+    @@map("oa")
+}
+
+model Agent {
+    id       BigInt @id @default(autoincrement())
+    name     String @db.VarChar(100)
+    status   String @db.VarChar(32)
+    username String @db.VarChar(32)
+    salt     String @db.VarChar(100)
+    password String @db.VarChar(100)
+
+    OAId Int @map("oa_id")
+
+    OA OA @relation(fields: [OAId], references: [id])
+
+    Debt Debt[]
+    @@map("agent")
+}
+
+model OACapability {
+    id         Int     @id @default(autoincrement())
+    jobType    String  @map("job_type") @db.VarChar(100)
+    capability Int     @db.Integer()
+    enabled    Boolean @default(true)
+
+    OAId Int @map("oa_id")
+
+    Oa OA @relation(fields: [OAId], references: [id])
+
+    @@map("oa_capability")
+}
+
+model Debt {
+    // id           BigInt  @id @default(autoincrement())
+    // status       String  @db.VarChar(100)
+    // chn          String  @db.VarChar(100)
+    // cid          Int     @unique @map("cid") @db.Integer()
+    // cif          Int     @db.Integer()
+    // intnow       Decimal @db.Decimal()
+    // principleamt Decimal @db.Decimal()
+    // intaccrued   Decimal @db.Decimal()
+
+    // detail Json
+    id                BigInt  @id @default(autoincrement())
+    status            String  @db.VarChar(100)
+    chn               String  @db.VarChar(100)
+    cid               BigInt  @unique @map("cid") @db.BigInt()
+    cif               Int     @db.Integer()
+    productcode       String  @db.VarChar(100)
+    productdesc       String  @db.VarChar(100)
+    subproductcode    String  @db.VarChar(100)
+    subproductdesc    String  @db.VarChar(100)
+    contractsigndate  BigInt  @db.BigInt()
+    contractEnddate   BigInt  @db.BigInt()
+    approveamt        Decimal @db.Decimal()
+    installmentamt    Decimal @db.Decimal()
+    schinstallment    Int     @db.Integer()
+    period            Int     @db.Integer()
+    lastpaymentdate   BigInt  @db.BigInt()
+    overdueamt        Decimal @db.Decimal()
+    paidperiod        Decimal @db.Decimal()
+    payseq            String  @db.VarChar(100)
+    int               String  @db.VarChar(100)
+    intdefault        Decimal @db.Decimal()
+    intnow            Decimal @db.Decimal()
+    intstatus         String  @db.VarChar(100)
+    principleamt      Decimal @db.Decimal()
+    intaccrued        Decimal @db.Decimal()
+    intCharge         Decimal @db.Decimal()
+    closepayamt       Decimal @db.Decimal()
+    closeintamt       Decimal @db.Decimal()
+    calclosedate      BigInt  @db.BigInt()
+    accountIdentify   String  @db.VarChar(100)
+    accountlevel      Int     @db.Integer()
+    writeoffdate      BigInt  @db.BigInt()
+    subaccstatus      String  @db.VarChar(100)
+    masteracc         Int     @db.Integer()
+    accountstatus     Int     @db.Integer()
+    accountstatusdesc String  @db.VarChar(100)
+    zdelperm          String  @db.VarChar(100)
+    zobfp             String  @db.VarChar(100)
+    zobfi             String  @db.VarChar(100)
+    oseqdt            String  @db.VarChar(100)
+    ownerBranchCode   Int     @db.Integer()
+    ownerBranchDesc   String  @db.VarChar(100)
+    detail            Json
+
+    AgentId BigInt? @map("agent_id")
+    OAId    Int?    @map("oa_id")
+
+    Agent Agent? @relation(fields: [AgentId], references: [id])
+    OA    OA?    @relation(fields: [OAId], references: [id])
+
+    @@map("debt")
+}
+
+model Debt_Address {
+
+    id       BigInt @id @default(autoincrement())
+    chn      String @db.VarChar(100)
+    cid      Int    @unique @map("cid") @db.Integer()
+    cif      Int    @db.Integer()
+    ad1      String @db.VarChar(100)
+    ad2      String @db.VarChar(100)
+    ad3      String @db.VarChar(100)
+    ad4      String @db.VarChar(100)
+    zsdistcd String @db.VarChar(100)
+    city     String @db.VarChar(100)
+    state    String @db.VarChar(100)
+    mzip     String @db.VarChar(100)
+    detail   Json
+
+    @@map("debt_address")
+}
+
+model Cus {
+
+    id          BigInt  @id @default(autoincrement())
+    chn         String  @db.VarChar(100)
+    cif         Int     @unique @map("cif") @db.Integer()
+    ztitle      String  @db.VarChar(100)
+    fname       String  @db.VarChar(100)
+    lnm         String  @db.VarChar(100)
+    zcizid      Int     @db.Integer()
+    dob         Int     @db.Integer()
+    sex         String  @db.VarChar(100)
+    zocc        Int     @db.Integer()
+    zocc_desc   String  @db.VarChar(100)
+    zsocc       Int     @db.Integer()
+    zsocc_desc  String  @db.VarChar(100)
+    zocc2       Int     @db.Integer()
+    zocc2_desc  String  @db.VarChar(100)
+    zsocc2      Int     @db.Integer()
+    zsocc2_desc String  @db.VarChar(100)
+    hph         Decimal @db.Decimal()
+    bph         Int     @db.Integer()
+    aph         Int     @db.Integer()
+    detail      Json
+
+    @@map("cus")
+}
+
+model Cus_Address {
+
+    id       BigInt @id @default(autoincrement())
+    chn      String @db.VarChar(100)
+    cif      Int    @unique @map("cif") @db.Integer()
+    pad1     Int    @db.Integer()
+    pad2     Int    @db.Integer()
+    pad3     Int    @db.Integer()
+    pad4     Int    @db.Integer()
+    zpsdiscd Int    @db.Integer()
+    pcity    Int    @db.Integer()
+    pstate   Int    @db.Integer()
+    pzip     Int    @db.Integer()
+    mad1     String @db.VarChar(100)
+    mad2     Int    @db.Integer()
+    mad3     Int    @db.Integer()
+    mad4     Int    @db.Integer()
+    zmsdiscd Int    @db.Integer()
+    mcity    Int    @db.Integer()
+    mstate   Int    @db.Integer()
+    mzip     Int    @db.Integer()
+    detail   Json
+
+    @@map("cus_address")
+}
+
+model Cob {
+
+    id     BigInt @id @default(autoincrement())
+    chn    String @db.VarChar(100)
+    cid    Int    @unique @map("cid") @db.Integer()
+    cif    Int    @db.Integer()
+    detail Json
+
+    @@map("cob")
+}
+
+model Trn {
+
+    id     BigInt  @id @default(autoincrement())
+    chn    String  @db.VarChar(100)
+    cid    Int     @unique @map("cid") @db.Integer()
+    tseq   Int     @db.Integer()
+    etc    String  @db.VarChar(100)
+    tjd    Int     @db.Integer()
+    time   String  @db.VarChar(100)
+    tot    Decimal @db.Decimal()
+    endbal Decimal @db.Decimal()
+    efd    Int     @db.Integer()
+    detail Json
+
+    @@map("trn")
+}
+
+model ODT {
+
+    id         BigInt  @id @default(autoincrement())
+    chn        String  @db.VarChar(100)
+    cid        Int     @unique @map("cid") @db.Integer()
+    seq        Int     @db.Integer()
+    odtyp      Int     @db.Integer()
+    odtyp_desc String  @db.VarChar(100)
+    stdt       BigInt  @db.BigInt()
+    expdt      Int     @db.Integer()
+    clamt      Decimal @db.Decimal()
+    activate   Int     @db.Integer()
+    ratecmp    Decimal @db.Decimal()
+    detail     Json
+
+    @@map("odt")
+}
+
+model SOD {
+
+    id           BigInt  @id @default(autoincrement())
+    chn          String  @db.VarChar(100)
+    cid          Int     @unique @map("cid") @db.Integer()
+    cif          Int     @db.Integer()
+    irn          Decimal @db.Decimal()
+    tld          Int     @db.Integer()
+    zfwos        Int     @db.Integer()
+    zfwod        Int     @db.Integer()
+    zstatcd      Int     @db.Integer()
+    zstatcd_desc String  @db.VarChar(100)
+    bal          Decimal @db.Decimal()
+    zcltot       Decimal @db.Decimal()
+    zintdel      Decimal @db.Decimal()
+    zdelprin     Decimal @db.Decimal()
+    zdlprd       Decimal @db.Decimal()
+    zexpdt       Int     @db.Integer()
+    acr          Decimal @db.Decimal()
+    negacr       Decimal @db.Decimal()
+    negacrun     Decimal @db.Decimal()
+    darcls       Int     @db.Integer()
+    darcovr      Int     @db.Integer()
+    provcat      Int     @db.Integer()
+    boo          Int     @db.Integer()
+    boo_desc     String  @db.VarChar(100)
+    detail       Json
+
+    @@map("sod")
+}
+
+model CreditCard {
+    cif                 String @id @unique @map("cif") @db.VarChar(100)
+    citizenId           Int    @map("citizen_id") @db.Integer()
+    nameTitle           String @map("name_title") @db.VarChar(100)
+    firstName           String @map("first_name") @db.VarChar(100)
+    lastName            String @map("last_name") @db.VarChar(100)
+    birthDate           BigInt @map("birth_date") @db.BigInt()
+    gender              String @db.VarChar(100)
+    occupation          String @db.VarChar(100)
+    address             String @db.VarChar(100)
+    houseNumber         String @map("house_number") @db.VarChar(100)
+    subDistrict         String @map("sub_district") @db.VarChar(100)
+    district            String @db.VarChar(100)
+    province            String @db.VarChar(100)
+    zipCode             String @map("zip_code") @db.VarChar(100)
+    homeTelNo           String @map("home_tel_no") @db.VarChar(100)
+    officeTelNo         String @map("office_tel_no") @db.VarChar(100)
+    telNo               String @map("tel_no") @db.VarChar(100)
+    customerNo          String @map("customer_no") @db.VarChar(100)
+    accountNo           String @map("account_no") @db.VarChar(100)
+    cardNo              String @map("card_no") @db.VarChar(100)
+    currentBillCycle    BigInt @map("current_bill_cycle") @db.BigInt()
+    minimumPayment      BigInt @map("minimum_payment") @db.BigInt()
+    provisionFlagCur    String @map("provision_flag_cur") @db.VarChar(100)
+    pastDue             Int    @map("past_due") @db.Integer()
+    delq30days          Int    @db.Integer()
+    delq60days          Int    @db.Integer()
+    currentDue          Int    @map("current_due") @db.Integer()
+    currentTotalAmtDue  Int    @map("current_total_amt_due") @db.Integer()
+    paidAmt             Int    @map("paid_amt") @db.Integer()
+    currentBalance      BigInt @map("current_balance") @db.BigInt()
+    principalAmount     BigInt @map("principal_amount") @db.BigInt()
+    interestAmt         BigInt @map("interest_amt") @db.BigInt()
+    feeAmt              BigInt @map("fee_amt") @db.BigInt()
+    totlPrincipalAmount BigInt @map("totl_principal_amount") @db.BigInt()
+    sendDataDate        BigInt @map("send_data_date") @db.BigInt()
+    typeOfProduct       String @map("type_of_product") @db.VarChar(100)
+    cardType            String @map("card_type") @db.VarChar(100)
+    cardCategory        String @map("card_catagory") @db.VarChar(100)
+    billingCycle        Int    @map("billing_cycle") @db.Integer()
+    cycleDue            Int    @map("cycle_due") @db.Integer()
+    blockCode           String @map("block_code") @db.VarChar(100)
+    dueDate             BigInt @map("due_date") @db.BigInt()
+    creditLimit         BigInt @map("credit_limit") @db.BigInt()
+    overDueDateDay      Int    @map("over_due_date_day") @db.Integer()
+    lastPaymentDate     BigInt @map("last_payment") @db.BigInt()
+    latestPayemtAmt     BigInt @map("latest_payment_amt")
+    nPLsWriteoffFlag    String @map("npls_writeoff_flag") @db.VarChar(100)
+    nPLDate             BigInt @map("npl_date") @db.BigInt()
+    writeoffDate        BigInt @map("writeoff_date") @db.BigInt()
+    startFollowDate     BigInt @map("start_follow_date") @db.BigInt()
+    endFollowDate       BigInt @map("end_follow_date") @db.BigInt()
+    staffFlag           String @map("staff_flag") @db.VarChar(100)
+    branchOwner         String @map("branch_owner") @db.VarChar(100)
+
+    @@map("credit_card")
+}
+
+model Todo {
+
+    id          BigInt   @id @default(autoincrement())
+    chn         String   @db.VarChar(100)
+    name        String   @unique @db.VarChar(100)
+    description String   @db.VarChar(100)
+    user        String   @db.VarChar(100)
+    completed   Boolean? @default(false)
+    oalist      String   @db.VarChar(200)
+
+    @@map("todo")
+}
+
+
+

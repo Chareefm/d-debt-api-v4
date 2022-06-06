@@ -1,0 +1,19 @@
+{
+  "name": "@d-debt/infra",
+  "version": "1.0.0",
+  "description": "d-debt Provider IaC",
+  "scripts": {
+    "dynamodb:seed": "cd dynamodb && sls dynamodb seed",
+    "dynamodb:migrate": "cd dynamodb && sls dynamodb migrate"
+  },
+  "devDependencies": {
+    "serverless": "^3.2.1",
+    "serverless-dotenv-plugin": "^3.12.2",
+    "serverless-dynamodb-local": "^0.2.40",
+    "serverless-pseudo-parameters": "^2.6.1"
+  },
+  "dependencies": {
+    "@prisma/client": "3.10.0"
+  },
+  "license": "MIT"
+}

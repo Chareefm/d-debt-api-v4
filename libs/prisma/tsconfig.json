@@ -1,0 +1,15 @@
+{
+    "extends": "../../tsconfig.json",
+    "include": [
+        "**/*.ts"
+    ],
+    "exclude": [
+        "node_modules/**/*",
+        ".serverless/**/*",
+        "_warmup/**/*",
+        ".vscode/**/*",
+        "test",
+        "dist",
+        "**/*spec.ts"
+    ]
+}

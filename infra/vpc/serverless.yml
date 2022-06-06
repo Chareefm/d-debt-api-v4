@@ -1,0 +1,227 @@
+service: ${self:custom.appName}-network
+
+custom:
+  # env
+  appName: ${env:SLS_APP_NAME}
+  stage: ${env:SLS_AWS_STAGE, 'non-production'}
+  profile: ${env:SLS_AWS_PROFILE}
+  region: ${env:SLS_AWS_REGION, 'ap-southeast-1'}
+  resource: ${self:custom.appName}-${self:custom.stage}
+
+  # resource
+  vpc: ${self:custom.resource}-VPC
+  availabilityZoneA: ${self:custom.region}a
+  availabilityZoneB: ${self:custom.region}b
+  publicSubnet: ${self:custom.resource}-PublicSubnet
+  privateSubnet: ${self:custom.resource}-PrivateSubnet
+  igw: ${self:custom.resource}-Igw
+  publicRoute: ${self:custom.resource}-PublicRoute
+  privateRoute: ${self:custom.resource}-PrivateRoute
+  securityGroup: ${self:custom.resource}-SecurityGroup
+  endpointDynamodb: ${self:custom.resource}-EndpointDynamodb
+  endpointS3: ${self:custom.resource}-EndpointS3
+
+  dotenv:
+    basePath: ./
+
+plugins:
+  - serverless-pseudo-parameters
+  - serverless-dotenv-plugin
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  profile: ${self:custom.profile}
+  region: ${self:custom.region}
+  versionFunctions: false
+
+resources:
+  Resources:
+    # Step 1: Create a new VPC
+    VPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: 10.0.0.0/16
+        Tags:
+          - Key: Name
+            Value: ${self:custom.vpc}
+
+    # Step 2: Create 2 Subnets
+    SubnetPublicA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: ${self:custom.availabilityZoneA}
+        CidrBlock: 10.0.1.0/24
+        Tags:
+          - Key: Name
+            Value: ${self:custom.publicSubnet}-A
+        VpcId: !Ref VPC
+      # Step 2: Create 2 Subnets
+    SubnetPublicB:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: ${self:custom.availabilityZoneB}
+        CidrBlock: 10.0.2.0/24
+        Tags:
+          - Key: Name
+            Value: ${self:custom.publicSubnet}-B
+        VpcId: !Ref VPC
+
+    SubnetPrivateA:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: ${self:custom.availabilityZoneA}
+        CidrBlock: 10.0.3.0/24
+        Tags:
+          - Key: Name
+            Value: ${self:custom.privateSubnet}-A
+        VpcId: !Ref VPC
+    
+    SubnetPrivateB:
+      Type: AWS::EC2::Subnet
+      Properties:
+        AvailabilityZone: ${self:custom.availabilityZoneB}
+        CidrBlock: 10.0.4.0/24
+        Tags:
+          - Key: Name
+            Value: ${self:custom.privateSubnet}-B
+        VpcId: !Ref VPC
+
+    # Step 3: Create an Internet Gateway
+    InternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags:
+          - Key: Name
+            Value: ${self:custom.igw}
+
+    # Attach Internet Gateway to VPC
+    VPCGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        InternetGatewayId: !Ref InternetGateway
+        VpcId: !Ref VPC
+
+    # Step 4: Create a public Route Table and Assign it to our public route
+    RouteTablePublic:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+        Tags:
+          - Key: Name
+            Value: ${self:custom.publicRoute}
+
+    RoutePublic:
+      Type: AWS::EC2::Route
+      Properties:
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref InternetGateway
+        RouteTableId: !Ref RouteTablePublic
+
+    SubnetRouteTableAssociationPublicA:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        RouteTableId: !Ref RouteTablePublic
+        SubnetId: !Ref SubnetPublicA
+
+    SubnetRouteTableAssociationPublicB:
+     Type: AWS::EC2::SubnetRouteTableAssociation
+     Properties:
+       RouteTableId: !Ref RouteTablePublic
+       SubnetId: !Ref SubnetPublicB
+
+    # Step 5: Create a NAT Gateway
+    # Before creating NAT Gateway, we need to create Elastic IP with vpc scope
+    EIP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+
+    NatGateway:
+      Type: AWS::EC2::NatGateway
+      DependsOn: EIP
+      Properties:
+        AllocationId: !GetAtt EIP.AllocationId
+        SubnetId: !Ref SubnetPublicA
+
+    # Step 6: Create a private Route Table and Assign it to our private route
+    RouteTablePrivate:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+        Tags:
+          - Key: Name
+            Value: ${self:custom.privateRoute}
+
+    RoutePrivate:
+      Type: AWS::EC2::Route
+      Properties:
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NatGateway
+        RouteTableId: !Ref RouteTablePrivate
+
+    SubnetRouteTableMainAssociationPrivateA:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        RouteTableId: !Ref RouteTablePrivate
+        SubnetId: !Ref SubnetPrivateA
+
+    SubnetRouteTableMainAssociationPrivateB:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        RouteTableId: !Ref RouteTablePrivate
+        SubnetId: !Ref SubnetPrivateB
+
+    # Step 7.1: Create a Security Group
+    SecurityGroup:
+      DependsOn: VPC
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: ${self:custom.securityGroup}
+        VpcId: !Ref VPC
+
+    # Step 8: Create a VPC Endpoint for DynamoDB and S3
+
+    EndpointDynamodb:
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        ServiceName: !Sub com.amazonaws.#{AWS::Region}.dynamodb
+        VpcId: !Ref VPC
+        RouteTableIds:
+          - !Ref RouteTablePublic
+          - !Ref RouteTablePrivate
+
+    EndpointS3:
+      Type: AWS::EC2::VPCEndpoint
+      Properties:
+        ServiceName: !Sub com.amazonaws.#{AWS::Region}.s3
+        VpcId: !Ref VPC
+        RouteTableIds:
+          - !Ref RouteTablePublic
+          - !Ref RouteTablePrivate
+
+  Outputs:
+    SecurityGroupId:
+      Value: !GetAtt SecurityGroup.GroupId
+      Export:
+        Name: ${self:custom.securityGroup}
+    PrivateSubnetAId:
+      Value: !Ref SubnetPrivateA
+      Export:
+        Name: ${self:custom.privateSubnet}-A
+    PrivateSubnetBId:
+      Value: !Ref SubnetPrivateA
+      Export:
+        Name: ${self:custom.privateSubnet}-B
+    VPC:
+      Value: !Ref VPC
+      Export:
+        Name: ${self:custom.vpc}
+    EndpointDynamodb:
+      Value: !Ref EndpointDynamodb
+      Export:
+        Name: ${self:custom.endpointDynamodb}
+    EndpointS3:
+      Value: !Ref EndpointS3
+      Export:
+        Name: ${self:custom.endpointS3}
